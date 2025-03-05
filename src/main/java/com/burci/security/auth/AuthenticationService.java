@@ -1,5 +1,15 @@
 package com.burci.security.auth;
 
+import java.io.IOException;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.burci.security.config.JwtService;
 import com.burci.security.token.Token;
 import com.burci.security.token.TokenRepository;
@@ -7,16 +17,10 @@ import com.burci.security.token.TokenType;
 import com.burci.security.user.User;
 import com.burci.security.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -112,5 +116,15 @@ public class AuthenticationService {
         new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
       }
     }
+  }
+  
+  
+  public String getAuthenticatedUsername() {
+      Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+      if (principal instanceof UserDetails) {
+          return ((UserDetails) principal).getUsername();
+      } else {
+          return principal.toString();
+      }
   }
 }

@@ -2,6 +2,7 @@ package com.burci.security.workout;
 
 
 import com.burci.security.exercise.Exercise;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -25,6 +26,7 @@ public class WorkoutExercise {
 
     @ManyToOne
     @JoinColumn(name = "workout_id")
+    @JsonIgnore
     private Workout workout; 
 
     @ManyToOne

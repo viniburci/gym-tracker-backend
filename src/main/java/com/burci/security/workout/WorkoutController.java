@@ -1,5 +1,6 @@
 package com.burci.security.workout;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ public class WorkoutController {
     private WorkoutService service;
 
     @GetMapping
-    public ResponseEntity<List<Workout>> getAllWorkouts() {
+    public ResponseEntity<List<WorkoutDTO>> getAllWorkouts() {
         return ResponseEntity.ok(service.findAll());
     }
 
@@ -32,8 +33,8 @@ public class WorkoutController {
     }
 
     @PostMapping
-    public ResponseEntity<Workout> createWorkout(@RequestBody Workout workout) {
-        return ResponseEntity.ok(service.save(workout));
+    public ResponseEntity<Workout> createWorkout(@RequestBody Workout workout, Principal principal) {
+        return ResponseEntity.ok(service.save(workout, principal));
     }
 
     @PutMapping("/{id}")

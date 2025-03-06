@@ -1,11 +1,20 @@
 package com.burci.security.user;
 
-import lombok.RequiredArgsConstructor;
+import java.security.Principal;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
+import com.burci.security.workout.WorkoutDTO;
+import com.burci.security.workout.WorkoutExerciseDTO;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -13,23 +22,75 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository repository;
+    
+    public List<User> findAllUsers() {
+    	return repository.findAll();
+    }
+    
+    @Transactional
+    public List<UserDTO> getAllUsers() {
+        List<User> users = repository.findAll();
+        return users.stream()
+                .map((User user) -> { // Explicit type for user
+                    // Create UserDTO
+                    UserDTO userDTO = new UserDTO();
+                    userDTO.setId(user.getId());
+                    userDTO.setFirstname(user.getFirstname());
+                    userDTO.setLastname(user.getLastname());
+                    userDTO.setEmail(user.getEmail());
+                    userDTO.setRole(user.getRole());
+
+                    // Map workouts, using empty list if workouts is null
+                    List<WorkoutDTO> workoutDTOs = Optional.ofNullable(user.getWorkouts())
+                            .orElse(Collections.emptyList()) // Avoid NullPointerException
+                            .stream()
+                            .map(workout -> { // Explicit type for workout
+                                WorkoutDTO workoutDTO = new WorkoutDTO();
+                                workoutDTO.setId(workout.getId());
+                                workoutDTO.setName(workout.getName());
+
+                                // Map workoutExercises, using empty list if workoutExercises is null
+                                List<WorkoutExerciseDTO> workoutExerciseDTOs = Optional.ofNullable(workout.getWorkoutExercises())
+                                        .orElse(Collections.emptyList()) // Avoid NullPointerException
+                                        .stream()
+                                        .map(workoutExercise -> { // Explicit type for workoutExercise
+                                            WorkoutExerciseDTO workoutExerciseDTO = new WorkoutExerciseDTO();
+                                            workoutExerciseDTO.setId(workoutExercise.getId());
+                                            workoutExerciseDTO.setExerciseId(workoutExercise.getExercise().getId());
+                                            workoutExerciseDTO.setImageUrl("/exercises/" + workoutExercise.getId() + "/image");
+                                            workoutExerciseDTO.setSets(workoutExercise.getSets());
+                                            workoutExerciseDTO.setReps(workoutExercise.getReps());
+                                            return workoutExerciseDTO;
+                                        })
+                                        .collect(Collectors.toList()); // Collect workout exercises
+
+                                workoutDTO.setWorkoutExercises(workoutExerciseDTOs);
+                                return workoutDTO;
+                            })
+                            .collect(Collectors.toList()); // Collect workouts
+
+                    userDTO.setWorkouts(workoutDTOs);
+
+                    return userDTO;
+                })
+                .collect(Collectors.toList()); // Collect all UserDTOs
+    }
+
+
+    
     public void changePassword(ChangePasswordRequest request, Principal connectedUser) {
 
         var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
 
-        // check if the current password is correct
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new IllegalStateException("Wrong password");
         }
-        // check if the two new passwords are the same
         if (!request.getNewPassword().equals(request.getConfirmationPassword())) {
             throw new IllegalStateException("Password are not the same");
         }
 
-        // update the password
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
-        // save the new password
         repository.save(user);
     }
 }

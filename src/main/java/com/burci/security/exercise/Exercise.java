@@ -3,6 +3,7 @@ package com.burci.security.exercise;
 import java.util.List;
 
 import com.burci.security.workout.WorkoutExercise;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -28,8 +29,10 @@ public class Exercise {
     private Type type;
     
     @Lob
+    @JsonIgnore
     private byte[] image;
     
     @OneToMany(mappedBy = "exercise")
+    @JsonIgnore
     private List<WorkoutExercise> workoutExercises;
 }

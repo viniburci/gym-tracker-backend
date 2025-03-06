@@ -1,5 +1,6 @@
 package com.burci.security.workout;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,6 +10,11 @@ import org.springframework.stereotype.Service;
 import com.burci.security.auth.AuthenticationService;
 import com.burci.security.exercise.Exercise;
 import com.burci.security.exercise.ExerciseRepository;
+import com.burci.security.user.User;
+import com.burci.security.user.UserRepository;
+
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 
 @Service
 public class WorkoutService {
@@ -24,9 +30,38 @@ public class WorkoutService {
     
     @Autowired
     private AuthenticationService authenticationService;
+    
+    @Autowired
+    private UserRepository userRepository;
 
-    public List<Workout> findAll() {
-        return workoutRepository.findAll();
+    @Transactional
+    public List<WorkoutDTO> findAll() {
+        List<Workout> workouts = workoutRepository.findAll();
+
+        return workouts.stream().map(workout -> {
+            WorkoutDTO workoutDTO = new WorkoutDTO();
+            workoutDTO.setId(workout.getId());
+            workoutDTO.setName(workout.getName());
+
+            workoutDTO.setWorkoutExercises(workout.getWorkoutExercises().stream()
+                .map(workoutExercise -> {
+                    WorkoutExerciseDTO workoutExerciseDTO = new WorkoutExerciseDTO();
+                    workoutExerciseDTO.setId(workoutExercise.getId());
+                    workoutExerciseDTO.setExerciseId(workoutExercise.getExercise().getId());
+                    workoutExerciseDTO.setExerciseName(workoutExercise.getExercise().getName());
+                    workoutExerciseDTO.setSets(workoutExercise.getSets());
+                    workoutExerciseDTO.setReps(workoutExercise.getReps());
+
+                    String imageUrl = "/exercises/" + workoutExercise.getExercise().getId() + "/image";
+                    workoutExerciseDTO.setImageUrl(imageUrl);
+
+                    return workoutExerciseDTO;
+                })
+                .collect(Collectors.toList()));
+
+            return workoutDTO;
+        })
+        .collect(Collectors.toList());
     }
 
     public List<Workout> findAllByUser() {
@@ -40,7 +75,19 @@ public class WorkoutService {
                 .orElseThrow(() -> new RuntimeException("Treino não encontrado ou acesso negado"));
     }
 
-    public Workout save(Workout workout) {
+    public Workout save(Workout workout, Principal principal) {
+        List<WorkoutExercise> validatedExercises = workout.getWorkoutExercises().stream().map(we -> {
+            Exercise exercise = exerciseRepository.findById(we.getExercise().getId())
+                .orElseThrow(() -> new RuntimeException("Exercício não encontrado: " + we.getExercise().getId()));
+            return new WorkoutExercise(workout, exercise, we.getSets(), we.getReps());
+        }).collect(Collectors.toList());
+        
+        String email = principal.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+
+        workout.setUser(user);
+        workout.setWorkoutExercises(validatedExercises);
         return workoutRepository.save(workout);
     }
 

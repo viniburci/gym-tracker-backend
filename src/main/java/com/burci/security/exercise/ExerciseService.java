@@ -33,7 +33,11 @@ public class ExerciseService {
         if (imageFile != null && !imageFile.isEmpty()) {
             exercise.setImage(imageFile.getBytes());
         }
-        return toDTO(repository.save(exercise));
+        
+        Exercise savedExercise = repository.save(exercise);
+        
+        ExerciseDTO dto = new ExerciseDTO(savedExercise);
+        return dto;
     }
 
     public byte[] getImageById(Long id) {

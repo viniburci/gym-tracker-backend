@@ -57,6 +57,7 @@ public class UserService {
                                             WorkoutExerciseDTO workoutExerciseDTO = new WorkoutExerciseDTO();
                                             workoutExerciseDTO.setId(workoutExercise.getId());
                                             workoutExerciseDTO.setExerciseId(workoutExercise.getExercise().getId());
+                                            workoutExerciseDTO.setExerciseName(workoutExercise.getExercise().getName());
                                             workoutExerciseDTO.setImageUrl("/exercises/" + workoutExercise.getId() + "/image");
                                             workoutExerciseDTO.setSets(workoutExercise.getSets());
                                             workoutExerciseDTO.setReps(workoutExercise.getReps());

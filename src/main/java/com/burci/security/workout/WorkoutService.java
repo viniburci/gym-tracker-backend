@@ -2,9 +2,13 @@ package com.burci.security.workout;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.burci.security.auth.AuthenticationService;
@@ -64,17 +68,28 @@ public class WorkoutService {
         .collect(Collectors.toList());
     }
 
-    public List<Workout> findAllByUser() {
-        String username = authenticationService.getAuthenticatedUsername();
-        return workoutRepository.findAllByUser(username);
+    @Transactional
+    public List<WorkoutDTO> findAllByUser(Principal principal) {
+        User user = authenticationService.getAuthenticatedUser(principal);
+        
+        List<Workout> workouts = workoutRepository.findAllByUser(user.getEmail());
+        
+        //força o Hibernate a inicializar a coleção antes que a sessão seja fechada.
+        workouts.forEach(workout -> workout.getWorkoutExercises().size());
+
+        return workouts.stream()
+                .map(WorkoutDTO::new)
+                .collect(Collectors.toList());
     }
 
-    public Workout findById(Long id) {
-        String username = authenticationService.getAuthenticatedUsername();
-        return workoutRepository.findByIdAndUser(id, username)
+    @Transactional
+    public Workout findById(Long id, Principal principal) {
+        User user = authenticationService.getAuthenticatedUser(principal);
+        return workoutRepository.findByIdAndUser(id, user.getEmail())
                 .orElseThrow(() -> new RuntimeException("Treino não encontrado ou acesso negado"));
     }
 
+    @Transactional
     public Workout save(Workout workout, Principal principal) {
         List<WorkoutExercise> validatedExercises = workout.getWorkoutExercises().stream().map(we -> {
             Exercise exercise = exerciseRepository.findById(we.getExercise().getId())
@@ -91,45 +106,129 @@ public class WorkoutService {
         return workoutRepository.save(workout);
     }
 
-    public Workout update(Long id, Workout updatedWorkout) {
-        return workoutRepository.findById(id).map(existingWorkout -> {
-            existingWorkout.setName(updatedWorkout.getName());
+    @Transactional
+    public WorkoutDTO update(Long id, Workout updatedWorkout, Principal principal) {
+        String email = principal.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 
-            List<WorkoutExercise> validExercises = updatedWorkout.getWorkoutExercises().stream()
-                .map(workoutExercise -> {
+        // Buscar o treino e garantir que pertence ao usuário autenticado
+        Workout existingWorkout = workoutRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Treino não encontrado"));
 
-                    Exercise exercise = exerciseRepository.findById(workoutExercise.getExercise().getId())
-                        .orElseThrow(() -> new RuntimeException("Exercício com ID " + workoutExercise.getExercise().getId() + " não encontrado"));
+        if (!existingWorkout.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("Você não tem permissão para alterar este treino.");
+        }
 
-                    return new WorkoutExercise(existingWorkout, exercise, workoutExercise.getSets(), workoutExercise.getReps());
-                })
-                .collect(Collectors.toList());
+        // Atualizar nome do treino
+        existingWorkout.setName(updatedWorkout.getName());
 
-            existingWorkout.setWorkoutExercises(validExercises);
-            return workoutRepository.save(existingWorkout);
-        }).orElseThrow(() -> new RuntimeException("Treino não encontrado"));
+        // Criar um mapa dos exercícios já vinculados ao treino
+        Map<Long, WorkoutExercise> existingExercisesMap = existingWorkout.getWorkoutExercises().stream()
+            .collect(Collectors.toMap(we -> we.getExercise().getId(), we -> we));
+
+        // Criar um conjunto com os IDs dos exercícios enviados na requisição
+        Set<Long> updatedExerciseIds = updatedWorkout.getWorkoutExercises().stream()
+            .map(we -> we.getExercise().getId())
+            .collect(Collectors.toSet());
+
+        // Atualizar ou adicionar novos exercícios
+        List<WorkoutExercise> updatedExercises = updatedWorkout.getWorkoutExercises().stream()
+            .map(workoutExercise -> {
+                Long exerciseId = workoutExercise.getExercise().getId();
+
+                // Buscar exercício no banco (evita criar um novo)
+                Exercise existingExercise = exerciseRepository.findById(exerciseId)
+                    .orElseThrow(() -> new EntityNotFoundException("Exercício com ID " + exerciseId + " não encontrado."));
+
+                // Se o exercício já existe no treino, apenas atualiza sets e reps
+                if (existingExercisesMap.containsKey(exerciseId)) {
+                    WorkoutExercise existingWorkoutExercise = existingExercisesMap.get(exerciseId);
+                    existingWorkoutExercise.setSets(workoutExercise.getSets());
+                    existingWorkoutExercise.setReps(workoutExercise.getReps());
+                    return existingWorkoutExercise;
+                } 
+
+                // Se o exercício existe no banco, mas ainda não foi adicionado ao treino, adicionamos
+                return new WorkoutExercise(existingWorkout, existingExercise, workoutExercise.getSets(), workoutExercise.getReps());
+            })
+            .collect(Collectors.toList());
+
+        // Remover exercícios que não estão na nova lista enviada
+        List<WorkoutExercise> exercisesToRemove = existingWorkout.getWorkoutExercises().stream()
+            .filter(we -> !updatedExerciseIds.contains(we.getExercise().getId()))
+            .collect(Collectors.toList());
+
+        // Remover os exercícios do treino
+        existingWorkout.getWorkoutExercises().removeAll(exercisesToRemove);
+        workoutExerciseRepository.deleteAll(exercisesToRemove);
+
+        existingWorkout.setWorkoutExercises(updatedExercises);
+
+        Workout savedWorkout = workoutRepository.save(existingWorkout);
+
+        // Retorna WorkoutDTO
+        return new WorkoutDTO(savedWorkout);
     }
 
+    @Transactional
+    public void delete(Long id, Principal principal) {
+    	User user = authenticationService.getAuthenticatedUser(principal);
 
-    public void delete(Long id) {
-        workoutRepository.deleteById(id);
+        Workout workout = workoutRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Treino não encontrado"));
+
+        if (!workout.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("Você não tem permissão para deletar este treino.");
+        }
+
+        workoutExerciseRepository.deleteAll(workout.getWorkoutExercises());
+
+        workoutRepository.delete(workout);
     }
 
-    public WorkoutExercise addExerciseToWorkout(Long workoutId, Long exerciseId, int sets, int reps) {
+    @Transactional
+    public WorkoutExerciseDTO addExerciseToWorkout(Long workoutId, Long exerciseId, int sets, int reps, Principal principal) {
+        String email = principal.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+
+        // Buscar treino e garantir que pertence ao usuário autenticado
         Workout workout = workoutRepository.findById(workoutId)
-                .orElseThrow(() -> new RuntimeException("Treino não encontrado"));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Treino não encontrado"));
+
+        if (!workout.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("Você não tem permissão para modificar este treino.");
+        }
+
+        // Buscar exercício existente no banco
         Exercise exercise = exerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new RuntimeException("Exercício não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Exercício não encontrado"));
 
-        WorkoutExercise workoutExercise = new WorkoutExercise();
-        workoutExercise.setWorkout(workout);
-        workoutExercise.setExercise(exercise);
-        workoutExercise.setSets(sets);
-        workoutExercise.setReps(reps);
+        // Verificar se o exercício já está no treino
+        Optional<WorkoutExercise> existingWorkoutExercise = workout.getWorkoutExercises().stream()
+                .filter(we -> we.getExercise().getId().equals(exerciseId))
+                .findFirst();
 
-        return workoutExerciseRepository.save(workoutExercise);
+        if (existingWorkoutExercise.isPresent()) {
+            // Atualiza os valores de sets e reps se o exercício já estiver no treino
+            WorkoutExercise workoutExercise = existingWorkoutExercise.get();
+            workoutExercise.setSets(sets);
+            workoutExercise.setReps(reps);
+            return new WorkoutExerciseDTO(workoutExerciseRepository.save(workoutExercise));
+        }
+
+        // Criar e adicionar o novo exercício ao treino
+        WorkoutExercise newWorkoutExercise = new WorkoutExercise();
+        newWorkoutExercise.setWorkout(workout);
+        newWorkoutExercise.setExercise(exercise);
+        newWorkoutExercise.setSets(sets);
+        newWorkoutExercise.setReps(reps);
+        
+        // Salvar e retornar um DTO ao invés da entidade bruta
+        return new WorkoutExerciseDTO(workoutExerciseRepository.save(newWorkoutExercise));
     }
+
     
 
 }

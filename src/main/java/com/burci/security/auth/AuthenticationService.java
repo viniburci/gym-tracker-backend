@@ -1,6 +1,7 @@
 package com.burci.security.auth;
 
 import java.io.IOException;
+import java.security.Principal;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,6 +19,7 @@ import com.burci.security.user.User;
 import com.burci.security.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class AuthenticationService {
 	private final PasswordEncoder passwordEncoder;
 	private final JwtService jwtService;
 	private final AuthenticationManager authenticationManager;
+	private final UserRepository userRepository;
 
 	public AuthenticationResponse register(RegisterRequest request) {
 		var user = User.builder().firstname(request.getFirstname()).lastname(request.getLastname())
@@ -92,12 +95,9 @@ public class AuthenticationService {
 		}
 	}
 
-	public String getAuthenticatedUsername() {
-		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		if (principal instanceof UserDetails) {
-			return ((UserDetails) principal).getUsername();
-		} else {
-			return principal.toString();
-		}
-	}
+    public User getAuthenticatedUser(Principal principal) {
+        String email = principal.getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+    }
 }

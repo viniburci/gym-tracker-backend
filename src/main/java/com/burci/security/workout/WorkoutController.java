@@ -28,8 +28,13 @@ public class WorkoutController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Workout> getWorkoutById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.findById(id));
+    public ResponseEntity<Workout> getWorkoutById(@PathVariable Long id, Principal principal) {
+        return ResponseEntity.ok(service.findById(id, principal));
+    }
+    
+    @GetMapping("/mine")
+    public ResponseEntity<List<WorkoutDTO>> findAllByUser(Principal principal){
+    	return ResponseEntity.ok(service.findAllByUser(principal));
     }
 
     @PostMapping
@@ -38,24 +43,25 @@ public class WorkoutController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Workout> updateWorkout(@PathVariable Long id, @RequestBody Workout workout) {
-        return ResponseEntity.ok(service.update(id, workout));
+    public ResponseEntity<WorkoutDTO> updateWorkout(@PathVariable Long id, @RequestBody Workout workout, Principal principal) {
+        return ResponseEntity.ok(service.update(id, workout, principal));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteWorkout(@PathVariable Long id) {
-        service.delete(id);
+    public ResponseEntity<Void> deleteWorkout(@PathVariable Long id, Principal principal) {
+        service.delete(id, principal);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{workoutId}/addExercise/{exerciseId}")
-    public ResponseEntity<WorkoutExercise> addExerciseToWorkout(
+    public ResponseEntity<WorkoutExerciseDTO> addExerciseToWorkout(
             @PathVariable Long workoutId,
             @PathVariable Long exerciseId,
             @RequestParam int sets,
-            @RequestParam int reps) {
+            @RequestParam int reps,
+            Principal principal) {
         
-        WorkoutExercise workoutExercise = service.addExerciseToWorkout(workoutId, exerciseId, sets, reps);
-        return ResponseEntity.ok(workoutExercise);
+        WorkoutExerciseDTO workoutExerciseDTO = service.addExerciseToWorkout(workoutId, exerciseId, sets, reps, principal);
+        return ResponseEntity.ok(workoutExerciseDTO);
     }
 }

@@ -1,5 +1,6 @@
 package com.burci.security.config;
 
+import com.burci.security.exception.CustomAccessDeniedHandler;
 import com.burci.security.user.Permission;
 import com.burci.security.user.Role;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class SecurityConfiguration {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
     private final LogoutHandler logoutHandler;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -60,6 +62,9 @@ public class SecurityConfiguration {
                                 .anyRequest()
                                 .authenticated()
                 )
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                    )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

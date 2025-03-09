@@ -6,12 +6,14 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import jakarta.persistence.EntityNotFoundException;
 
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 	@ExceptionHandler(EntityNotFoundException.class)
 	public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException ex) {
@@ -34,6 +36,11 @@ public class GlobalExceptionHandler {
 				ex.getMessage(), LocalDateTime.now());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 	}
+	
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<String> handleAccessDeniedException(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    }
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {

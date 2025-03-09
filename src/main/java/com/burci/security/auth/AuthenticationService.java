@@ -100,4 +100,10 @@ public class AuthenticationService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
     }
+    
+    public User getAuthenticatedUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+    }
 }

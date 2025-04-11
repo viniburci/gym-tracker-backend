@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.burci.security.token.Token;
 import com.burci.security.workout.Workout;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;

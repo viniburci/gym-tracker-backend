@@ -13,6 +13,11 @@ spring:
         format_sql: true
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+#  jackson:
+#    serialization:
+#      fail-on-empty-beans: false
+#      indent-output: true
+#    default-property-inclusion: NON_NULL
 
 application:
   security:

@@ -1,5 +1,7 @@
 package com.burci.security.auth;
 
+import java.time.LocalDate;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,4 +18,8 @@ public class AuthenticationResponse {
   private String accessToken;
   @JsonProperty("refresh_token")
   private String refreshToken;
+  @JsonProperty("expires_in")
+  private Long expiresIn;
+  @JsonProperty("expiration_date")
+  private LocalDate expirationDate;
 }

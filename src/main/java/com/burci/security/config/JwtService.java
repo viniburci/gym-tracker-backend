@@ -5,7 +5,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +27,13 @@ public class JwtService {
   private long jwtExpiration;
   @Value("${application.security.jwt.refresh-token.expiration}")
   private long refreshExpiration;
+  
+  @PostConstruct
+  public void init() {
+      System.out.println("jwtExpiration (ms): " + jwtExpiration); 
+      System.out.println("refreshExpiration (ms): " + refreshExpiration);
+      System.out.println("Hora atual (UTC): " + Instant.now());
+  }
 
   public String extractUsername(String token) {
     return extractClaim(token, Claims::getSubject);
@@ -56,6 +66,9 @@ public class JwtService {
           UserDetails userDetails,
           long expiration
   ) {
+	  
+	  Date expirationDate = new Date(System.currentTimeMillis() + expiration);
+	  System.out.println("Token expira em (UTC): " + expirationDate.toInstant());
     return Jwts
             .builder()
             .setClaims(extraClaims)

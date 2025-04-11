@@ -48,4 +48,9 @@ public class GlobalExceptionHandler {
 				"Erro interno no servidor", ex.getMessage(), LocalDateTime.now());
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
 	}
+	
+	@ExceptionHandler(StackOverflowError.class)
+	public ResponseEntity<String> handleStackOverflow(StackOverflowError e) {
+	    return ResponseEntity.status(500).body("StackOverflowError: " + e.getMessage());
+	}
 }

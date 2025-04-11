@@ -75,19 +75,25 @@ public class WorkoutService {
 
     @Transactional
     public WorkoutDTO save(Workout workout) {
-    	User user = authenticationService.getAuthenticatedUser();
-
+        User user = authenticationService.getAuthenticatedUser();
+        
         List<WorkoutExercise> validatedExercises = workout.getWorkoutExercises().stream()
-                .map(we -> {
-                    Exercise exercise = exerciseRepository.findById(we.getExercise().getId())
-                            .orElseThrow(() -> new EntityNotFoundException("Exercício não encontrado: " + we.getExercise().getId()));
-                    return new WorkoutExercise(workout, exercise, we.getSets(), we.getReps());
-                })
-                .collect(Collectors.toList());
+            .map(we -> {
+                Exercise exercise = exerciseRepository.findById(we.getExercise().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Exercício não encontrado"));
+                WorkoutExercise newWe = new WorkoutExercise();
+                newWe.setExercise(exercise);
+                newWe.setSets(we.getSets());
+                newWe.setReps(we.getReps());
+                newWe.setWorkout(workout);
+                return newWe;
+            })
+            .collect(Collectors.toList());
 
         workout.setUser(user);
         workout.setWorkoutExercises(validatedExercises);
-        return new WorkoutDTO(workoutRepository.save(workout));
+        Workout savedWorkout = workoutRepository.save(workout);
+        return new WorkoutDTO(savedWorkout);
     }
 
     @Transactional

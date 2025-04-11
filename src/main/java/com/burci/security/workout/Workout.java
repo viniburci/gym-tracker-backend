@@ -1,5 +1,6 @@
 package com.burci.security.workout;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.burci.security.user.User;
@@ -31,6 +32,6 @@ public class Workout {
     private User user;
 
     @OneToMany(mappedBy = "workout", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<WorkoutExercise> workoutExercises;
+    private List<WorkoutExercise> workoutExercises = new ArrayList<>();
 	
 }

@@ -124,7 +124,7 @@ public class AuthenticationService {
     
     public User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        //System.out.println("authService getAuthenticatedUser, getName: " + email);
+        System.out.println("authService getAuthenticatedUser, getName: " + email);
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
     }

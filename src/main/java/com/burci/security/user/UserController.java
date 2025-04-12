@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.burci.security.auth.AuthenticationService;
+
 import lombok.RequiredArgsConstructor;
 
 
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService service;
+    private final AuthenticationService authService;
 
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers() {
@@ -34,5 +37,11 @@ public class UserController {
         service.changePassword(request, connectedUser);
         return ResponseEntity.ok().build();
     }
+    
+	@GetMapping("/me")
+	public ResponseEntity<UserProjection> getAuthenticatedUser() {
+		UserProjection projection = service.findProjectionByEmail();
+		return ResponseEntity.ok(projection);
+	}
 
 }

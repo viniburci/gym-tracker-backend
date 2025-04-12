@@ -8,12 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-import org.springframework.web.bind.annotation.GetMapping;
-
-import com.burci.security.user.User;
-import com.burci.security.user.UserDTO;
-
-
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -34,13 +28,6 @@ public class AuthenticationController {
 	@PostMapping("/refresh-token")
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		service.refreshToken(request, response);
-	}
-	
-	@GetMapping("/me")
-	public ResponseEntity<UserDTO> getAuthenticatedUser() {
-		User user = service.getAuthenticatedUser();
-		UserDTO dto = UserDTO.builder().email(user.getEmail()).firstname(user.getFirstname()).lastname(user.getLastname()).role(user.getRole()).build();
-		return ResponseEntity.ok(dto);
 	}
 
 }

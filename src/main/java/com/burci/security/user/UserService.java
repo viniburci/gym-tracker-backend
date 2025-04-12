@@ -7,12 +7,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.burci.security.auth.AuthenticationService;
 import com.burci.security.workout.WorkoutDTO;
 import com.burci.security.workout.WorkoutExerciseDTO;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -20,78 +23,78 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final PasswordEncoder passwordEncoder;
-    private final UserRepository repository;
-    
-    public List<User> findAllUsers() {
-    	return repository.findAll();
-    }
-    
-    @Transactional
-    public List<UserDTO> getAllUsers() {
-        List<User> users = repository.findAll();
-        return users.stream()
-                .map((User user) -> { // Explicit type for user
-                    // Create UserDTO
-                    UserDTO userDTO = new UserDTO();
-                    userDTO.setId(user.getId());
-                    userDTO.setFirstname(user.getFirstname());
-                    userDTO.setLastname(user.getLastname());
-                    userDTO.setEmail(user.getEmail());
-                    userDTO.setRole(user.getRole());
+	private final PasswordEncoder passwordEncoder;
+	private final UserRepository repository;
 
-                    // Map workouts, using empty list if workouts is null
-                    List<WorkoutDTO> workoutDTOs = Optional.ofNullable(user.getWorkouts())
-                            .orElse(Collections.emptyList()) // Avoid NullPointerException
-                            .stream()
-                            .map(workout -> { // Explicit type for workout
-                                WorkoutDTO workoutDTO = new WorkoutDTO();
-                                workoutDTO.setId(workout.getId());
-                                workoutDTO.setName(workout.getName());
+	public List<User> findAllUsers() {
+		return repository.findAll();
+	}
 
-                                // Map workoutExercises, using empty list if workoutExercises is null
-                                List<WorkoutExerciseDTO> workoutExerciseDTOs = Optional.ofNullable(workout.getWorkoutExercises())
-                                        .orElse(Collections.emptyList()) // Avoid NullPointerException
-                                        .stream()
-                                        .map(workoutExercise -> { // Explicit type for workoutExercise
-                                            WorkoutExerciseDTO workoutExerciseDTO = new WorkoutExerciseDTO();
-                                            workoutExerciseDTO.setId(workoutExercise.getId());
-                                            workoutExerciseDTO.setExerciseId(workoutExercise.getExercise().getId());
-                                            workoutExerciseDTO.setExerciseName(workoutExercise.getExercise().getName());
-                                            workoutExerciseDTO.setImageUrl("/exercises/" + workoutExercise.getId() + "/image");
-                                            workoutExerciseDTO.setSets(workoutExercise.getSets());
-                                            workoutExerciseDTO.setReps(workoutExercise.getReps());
-                                            return workoutExerciseDTO;
-                                        })
-                                        .collect(Collectors.toList()); // Collect workout exercises
+	@Transactional
+	public List<UserDTO> getAllUsers() {
+		List<User> users = repository.findAll();
+		return users.stream().map((User user) -> { // Explicit type for user
+			// Create UserDTO
+			UserDTO userDTO = new UserDTO();
+			userDTO.setId(user.getId());
+			userDTO.setFirstname(user.getFirstname());
+			userDTO.setLastname(user.getLastname());
+			userDTO.setEmail(user.getEmail());
+			userDTO.setRole(user.getRole());
 
-                                workoutDTO.setWorkoutExercises(workoutExerciseDTOs);
-                                return workoutDTO;
-                            })
-                            .collect(Collectors.toList()); // Collect workouts
+			// Map workouts, using empty list if workouts is null
+			List<WorkoutDTO> workoutDTOs = Optional.ofNullable(user.getWorkouts()).orElse(Collections.emptyList()) // Avoid
+																													// NullPointerException
+					.stream().map(workout -> { // Explicit type for workout
+						WorkoutDTO workoutDTO = new WorkoutDTO();
+						workoutDTO.setId(workout.getId());
+						workoutDTO.setName(workout.getName());
 
-                    userDTO.setWorkouts(workoutDTOs);
+						// Map workoutExercises, using empty list if workoutExercises is null
+						List<WorkoutExerciseDTO> workoutExerciseDTOs = Optional
+								.ofNullable(workout.getWorkoutExercises()).orElse(Collections.emptyList()) // Avoid
+																											// NullPointerException
+								.stream().map(workoutExercise -> { // Explicit type for workoutExercise
+									WorkoutExerciseDTO workoutExerciseDTO = new WorkoutExerciseDTO();
+									workoutExerciseDTO.setId(workoutExercise.getId());
+									workoutExerciseDTO.setExerciseId(workoutExercise.getExercise().getId());
+									workoutExerciseDTO.setExerciseName(workoutExercise.getExercise().getName());
+									workoutExerciseDTO.setImageUrl("/exercises/" + workoutExercise.getId() + "/image");
+									workoutExerciseDTO.setSets(workoutExercise.getSets());
+									workoutExerciseDTO.setReps(workoutExercise.getReps());
+									return workoutExerciseDTO;
+								}).collect(Collectors.toList()); // Collect workout exercises
 
-                    return userDTO;
-                })
-                .collect(Collectors.toList()); // Collect all UserDTOs
-    }
+						workoutDTO.setWorkoutExercises(workoutExerciseDTOs);
+						return workoutDTO;
+					}).collect(Collectors.toList()); // Collect workouts
 
+			userDTO.setWorkouts(workoutDTOs);
 
-    
-    public void changePassword(ChangePasswordRequest request, Principal connectedUser) {
+			return userDTO;
+		}).collect(Collectors.toList()); // Collect all UserDTOs
+	}
 
-        var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+	public void changePassword(ChangePasswordRequest request, Principal connectedUser) {
 
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new IllegalStateException("Wrong password");
-        }
-        if (!request.getNewPassword().equals(request.getConfirmationPassword())) {
-            throw new IllegalStateException("Password are not the same");
-        }
+		var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
 
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+		if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+			throw new IllegalStateException("Wrong password");
+		}
+		if (!request.getNewPassword().equals(request.getConfirmationPassword())) {
+			throw new IllegalStateException("Password are not the same");
+		}
 
-        repository.save(user);
+		user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+		repository.save(user);
+	}
+
+	public UserProjection findProjectionByEmail() {
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    	UserProjection projection = repository.findProjectionByEmail(email)
+    			.orElseThrow(() -> new EntityNotFoundException("Usuario não encontrado"));
+    	return projection;
     }
 }

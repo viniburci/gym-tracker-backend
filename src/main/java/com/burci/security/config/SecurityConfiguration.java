@@ -49,7 +49,7 @@ public class SecurityConfiguration {
             "/swagger-ui.html",
             "/exercises/**",
             "/workouts/**",
-            "/api/v1/users"};
+            "/api/v1/users/**"};
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
     private final LogoutHandler logoutHandler;

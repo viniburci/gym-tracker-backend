@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.security.Principal;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -47,8 +49,12 @@ public class AuthenticationService {
 		var jwtToken = jwtService.generateToken(user);
 		var expiresIn = jwtExpirationMs;
 		var refreshToken = jwtService.generateRefreshToken(user);
+	    
+	    var expirationDate = getIsoDateForJs(expiresIn);
+	    
+	    
 		saveUserToken(savedUser, jwtToken);
-		return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).expiresIn(expiresIn).build();
+		return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).expiresIn(expiresIn).expirationDate(expirationDate).build();
 	}
 
 	public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -60,10 +66,7 @@ public class AuthenticationService {
 	    var jwtToken = jwtService.generateToken(user);
 	    var expiresIn = jwtExpirationMs;
 	    
-	    var expirationDate = Instant.now()
-	                              .plusMillis(expiresIn)
-	                              .atZone(ZoneId.systemDefault())
-	                              .toLocalDate();
+	    var expirationDate = getIsoDateForJs(expiresIn);
 	    
 	    var refreshToken = jwtService.generateRefreshToken(user);
 	    revokeAllUserTokens(user);
@@ -127,5 +130,11 @@ public class AuthenticationService {
         System.out.println("authService getAuthenticatedUser, getName: " + email);
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+    }
+    
+    private String getIsoDateForJs(long expiresInMillis) {
+        Instant expiration = Instant.now().plusMillis(expiresInMillis);
+        ZonedDateTime zonedDate = expiration.atZone(ZoneId.systemDefault());
+        return zonedDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 }

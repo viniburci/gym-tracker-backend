@@ -1,6 +1,7 @@
 package com.burci.security.user;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -89,7 +90,7 @@ public class UserService {
 		user.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
 		repository.save(user);
-	}
+	} 
 
 	public UserProjection findProjectionByEmail() {
 		String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -97,4 +98,20 @@ public class UserService {
     			.orElseThrow(() -> new EntityNotFoundException("Usuario não encontrado"));
     	return projection;
     }
+	
+	public UserDTO findUserByEmail() {
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    	User user = repository.findByEmail(email)
+    			.orElseThrow(() -> new EntityNotFoundException("Usuario não encontrado"));
+    	List<WorkoutDTO> workouts = new ArrayList<>();
+    	user.getWorkouts().forEach(w -> workouts.add(new WorkoutDTO(w)));
+    	UserDTO dto = new UserDTO(user.getId(), user.getFirstname(), user.getLastname(), user.getEmail(), user.getRole(), workouts);
+    	return dto;
+    }
+	
+	public UserMinDTO findUserMinDTOByEmail() {
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
+		UserMinDTO minDTO = repository.findMinDTOByEmail(email).orElseThrow(() -> new EntityNotFoundException("Usuario não encontrado minDTO"));
+		return minDTO;
+	}
 }

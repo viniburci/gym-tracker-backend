@@ -21,5 +21,5 @@ public class AuthenticationResponse {
   @JsonProperty("expires_in")
   private Long expiresIn;
   @JsonProperty("expiration_date")
-  private LocalDate expirationDate;
+  private String expirationDate;
 }

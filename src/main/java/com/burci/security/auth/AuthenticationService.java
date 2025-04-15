@@ -37,9 +37,9 @@ public class AuthenticationService {
 	private final JwtService jwtService;
 	private final AuthenticationManager authenticationManager;
 	private final UserRepository userRepository;
-	
+
 	@Value("${application.security.jwt.expiration}")
-    private Long jwtExpirationMs;
+	private Long jwtExpirationMs;
 
 	public AuthenticationResponse register(RegisterRequest request) {
 		var user = User.builder().firstname(request.getFirstname()).lastname(request.getLastname())
@@ -49,35 +49,30 @@ public class AuthenticationService {
 		var jwtToken = jwtService.generateToken(user);
 		var expiresIn = jwtExpirationMs;
 		var refreshToken = jwtService.generateRefreshToken(user);
-	    
-	    var expirationDate = getIsoDateForJs(expiresIn);
-	    
-	    
+
+		var expirationDate = getIsoDateForJs(expiresIn);
+
 		saveUserToken(savedUser, jwtToken);
-		return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).expiresIn(expiresIn).expirationDate(expirationDate).build();
+		return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).expiresIn(expiresIn)
+				.expirationDate(expirationDate).user(savedUser).build();
 	}
 
 	public AuthenticationResponse authenticate(AuthenticationRequest request) {
-	    authenticationManager.authenticate(
-	        new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-	    );
-	    
-	    var user = repository.findByEmail(request.getEmail()).orElseThrow();
-	    var jwtToken = jwtService.generateToken(user);
-	    var expiresIn = jwtExpirationMs;
-	    
-	    var expirationDate = getIsoDateForJs(expiresIn);
-	    
-	    var refreshToken = jwtService.generateRefreshToken(user);
-	    revokeAllUserTokens(user);
-	    saveUserToken(user, jwtToken);
-	    
-	    return AuthenticationResponse.builder()
-	            .accessToken(jwtToken)
-	            .refreshToken(refreshToken)
-	            .expiresIn(expiresIn)
-	            .expirationDate(expirationDate)
-	            .build();
+		authenticationManager
+				.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+
+		var user = repository.findByEmail(request.getEmail()).orElseThrow();
+		var jwtToken = jwtService.generateToken(user);
+		var expiresIn = jwtExpirationMs;
+
+		var expirationDate = getIsoDateForJs(expiresIn);
+
+		var refreshToken = jwtService.generateRefreshToken(user);
+		revokeAllUserTokens(user);
+		saveUserToken(user, jwtToken);
+
+		return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).expiresIn(expiresIn)
+				.expirationDate(expirationDate).user(user).build();
 	}
 
 	private void saveUserToken(User user, String jwtToken) {
@@ -98,6 +93,7 @@ public class AuthenticationService {
 	}
 
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		System.out.println("Método refreshToken chamado");
 		final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 		final String refreshToken;
 		final String userEmail;
@@ -112,29 +108,35 @@ public class AuthenticationService {
 				var accessToken = jwtService.generateToken(user);
 				revokeAllUserTokens(user);
 				saveUserToken(user, accessToken);
-				var authResponse = AuthenticationResponse.builder().accessToken(accessToken).refreshToken(refreshToken)
-						.build();
+				
+				var expiresIn = jwtExpirationMs;
+				var expirationDate = getIsoDateForJs(expiresIn);
+				
+				var authResponse = AuthenticationResponse.builder().accessToken(accessToken).refreshToken(refreshToken).expiresIn(expiresIn)
+						.expirationDate(expirationDate).user(user).build();
+							
 				new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
 			}
 		}
+		System.out.println("refresh-token sent");
 	}
 
-    public User getAuthenticatedUser(Principal principal) {
-        String email = principal.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
-    }
-    
-    public User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        System.out.println("authService getAuthenticatedUser, getName: " + email);
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
-    }
-    
-    private String getIsoDateForJs(long expiresInMillis) {
-        Instant expiration = Instant.now().plusMillis(expiresInMillis);
-        ZonedDateTime zonedDate = expiration.atZone(ZoneId.systemDefault());
-        return zonedDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    }
+	public User getAuthenticatedUser(Principal principal) {
+		String email = principal.getName();
+		return userRepository.findByEmail(email)
+				.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+	}
+
+	public User getAuthenticatedUser() {
+		String email = SecurityContextHolder.getContext().getAuthentication().getName();
+		System.out.println("authService getAuthenticatedUser, getName: " + email);
+		return userRepository.findByEmail(email)
+				.orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+	}
+
+	private String getIsoDateForJs(long expiresInMillis) {
+		Instant expiration = Instant.now().plusMillis(expiresInMillis);
+		ZonedDateTime zonedDate = expiration.atZone(ZoneId.systemDefault());
+		return zonedDate.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+	}
 }

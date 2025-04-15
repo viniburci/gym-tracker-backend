@@ -27,6 +27,7 @@ public class AuthenticationController {
 
 	@PostMapping("/refresh-token")
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		System.out.println("Endpoint /refresh-token chamado");
 		service.refreshToken(request, response);
 	}
 

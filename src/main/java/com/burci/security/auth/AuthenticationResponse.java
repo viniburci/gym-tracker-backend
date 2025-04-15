@@ -1,8 +1,8 @@
 package com.burci.security.auth;
 
-import java.time.LocalDate;
-
+import com.burci.security.user.User;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,4 +22,7 @@ public class AuthenticationResponse {
   private Long expiresIn;
   @JsonProperty("expiration_date")
   private String expirationDate;
+  @JsonProperty("user")
+  private User user;
+  
 }

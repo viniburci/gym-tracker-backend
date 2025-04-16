@@ -76,6 +76,10 @@ public class AuthenticationService {
 	}
 
 	private void saveUserToken(User user, String jwtToken) {
+		if (tokenRepository.existsByToken(jwtToken)) {
+	        System.out.println("Token já existe no banco.");
+	        return;
+	    }
 		var token = Token.builder().user(user).token(jwtToken).tokenType(TokenType.BEARER).expired(false).revoked(false)
 				.build();
 		tokenRepository.save(token);
@@ -93,32 +97,57 @@ public class AuthenticationService {
 	}
 
 	public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		System.out.println("Método refreshToken chamado");
-		final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-		final String refreshToken;
-		final String userEmail;
-		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-			return;
-		}
-		refreshToken = authHeader.substring(7);
-		userEmail = jwtService.extractUsername(refreshToken);
-		if (userEmail != null) {
-			var user = this.repository.findByEmail(userEmail).orElseThrow();
-			if (jwtService.isTokenValid(refreshToken, user)) {
-				var accessToken = jwtService.generateToken(user);
-				revokeAllUserTokens(user);
-				saveUserToken(user, accessToken);
-				
-				var expiresIn = jwtExpirationMs;
-				var expirationDate = getIsoDateForJs(expiresIn);
-				
-				var authResponse = AuthenticationResponse.builder().accessToken(accessToken).refreshToken(refreshToken).expiresIn(expiresIn)
-						.expirationDate(expirationDate).user(user).build();
-							
-				new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
-			}
-		}
-		System.out.println("refresh-token sent");
+	    final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+	    final String refreshToken;
+	    final String userEmail;
+
+	    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+	        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+	        response.getWriter().write("Authorization header is missing or invalid.");
+	        return;
+	    }
+
+	    refreshToken = authHeader.substring(7);
+	    userEmail = jwtService.extractUsername(refreshToken);
+
+	    if (userEmail != null) {
+	        var userOptional = this.repository.findByEmail(userEmail);
+
+	        if (userOptional.isEmpty()) {
+	            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+	            response.getWriter().write("User not found.");
+	            return;
+	        }
+	        
+	        var user = userOptional.get();
+
+	        if (!jwtService.isTokenValid(refreshToken, user)) {
+	            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+	            response.getWriter().write("Invalid or expired refresh token.");
+	            return;
+	        }
+
+	        var accessToken = jwtService.generateToken(user);
+
+	        if (!tokenRepository.existsByToken(accessToken)) {
+	            revokeAllUserTokens(user);
+	            saveUserToken(user, accessToken);
+	        }
+
+	        var expiresIn = jwtExpirationMs;
+	        var expirationDate = getIsoDateForJs(expiresIn);
+
+	        var authResponse = AuthenticationResponse.builder()
+	                .accessToken(accessToken)
+	                .refreshToken(refreshToken)
+	                .expiresIn(expiresIn)
+	                .expirationDate(expirationDate)
+	                .user(user)
+	                .build();
+
+	        response.setStatus(HttpServletResponse.SC_OK);
+	        new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+	    }
 	}
 
 	public User getAuthenticatedUser(Principal principal) {

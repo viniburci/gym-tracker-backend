@@ -19,10 +19,10 @@ spring:
 #      indent-output: true
 #    default-property-inclusion: NON_NULL
 
-#logging:
-#  level:
-#    org.hibernate.SQL: DEBUG
-#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 application:
   security:

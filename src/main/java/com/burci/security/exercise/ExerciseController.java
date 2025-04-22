@@ -1,6 +1,8 @@
 package com.burci.security.exercise;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URLConnection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,16 +39,17 @@ public class ExerciseController {
     }
 
     @GetMapping("/{id}/image")
-    public ResponseEntity<byte[]> getExerciseImage(@PathVariable Long id) {
+    public ResponseEntity<byte[]> getExerciseImage(@PathVariable Long id) throws IOException {
         byte[] image = service.getImageById(id);
 
         if (image == null || image.length == 0) {
             return ResponseEntity.notFound().build();
         }
-
-        String mimeType = "image/jpeg";
-        if (image.length > 0) {
-            mimeType = "image/jpeg";
+        
+        String mimeType = URLConnection.guessContentTypeFromStream(new ByteArrayInputStream(image));
+        
+        if (mimeType == null) {
+            mimeType = "application/octet-stream"; // Tipo genérico para binário
         }
 
         return ResponseEntity.ok()

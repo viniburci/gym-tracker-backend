@@ -42,15 +42,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
 
+	@ExceptionHandler(StackOverflowError.class)
+	public ResponseEntity<String> handleStackOverflow(StackOverflowError e) {
+	    return ResponseEntity.status(500).body("StackOverflowError: " + e.getMessage());
+	}
+	
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
 		ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
 				"Erro interno no servidor", ex.getMessage(), LocalDateTime.now());
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-	}
-	
-	@ExceptionHandler(StackOverflowError.class)
-	public ResponseEntity<String> handleStackOverflow(StackOverflowError e) {
-	    return ResponseEntity.status(500).body("StackOverflowError: " + e.getMessage());
 	}
 }

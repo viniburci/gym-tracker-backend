@@ -20,6 +20,7 @@ import com.burci.security.token.Token;
 import com.burci.security.token.TokenRepository;
 import com.burci.security.token.TokenType;
 import com.burci.security.user.User;
+import com.burci.security.user.UserMinDTO;
 import com.burci.security.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -54,7 +55,9 @@ public class AuthenticationService {
 
 		saveUserToken(savedUser, jwtToken);
 		return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).expiresIn(expiresIn)
-				.expirationDate(expirationDate).user(savedUser).build();
+				.expirationDate(expirationDate).user(new UserMinDTO(savedUser)).build();
+		
+		
 	}
 
 	public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -72,7 +75,7 @@ public class AuthenticationService {
 		saveUserToken(user, jwtToken);
 
 		return AuthenticationResponse.builder().accessToken(jwtToken).refreshToken(refreshToken).expiresIn(expiresIn)
-				.expirationDate(expirationDate).user(user).build();
+				.expirationDate(expirationDate).user(new UserMinDTO(user)).build();
 	}
 
 	private void saveUserToken(User user, String jwtToken) {
@@ -142,7 +145,7 @@ public class AuthenticationService {
 	                .refreshToken(refreshToken)
 	                .expiresIn(expiresIn)
 	                .expirationDate(expirationDate)
-	                .user(user)
+	                .user(new UserMinDTO(user))
 	                .build();
 
 	        response.setStatus(HttpServletResponse.SC_OK);

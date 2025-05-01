@@ -18,6 +18,10 @@ spring:
 #      fail-on-empty-beans: false
 #      indent-output: true
 #    default-property-inclusion: NON_NULL
+#  sql:
+#    init:
+#      data-locations: classpath:db/data.sql
+#      mode: always
 
 logging:
   level:
@@ -31,3 +35,4 @@ application:
       expiration: 86400000 # a day
       refresh-token:
         expiration: 604800000 # 7 days
+

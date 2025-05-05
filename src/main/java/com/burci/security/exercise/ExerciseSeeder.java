@@ -28,16 +28,16 @@ public class ExerciseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-    	Thread.sleep(2000);
-        if (exerciseRepository.count() == 0) {
-            List<Exercise> exercises = exerciseRepository.saveAll(List.of(
-                new Exercise(1L, "Agachamento", Type.PERNA, null, null),
-                new Exercise(2L, "Supino", Type.PEITO, null, null),
-                new Exercise(3L, "Rosca Direta", Type.BRACO, null, null),
-                new Exercise(4L, "Corrida", Type.CARDIO, null, null),
-                new Exercise(5L, "Abdominal", Type.CORE, null, null)
-            ));
-            System.out.println("Exercícios padrão inseridos no banco!");
+//        if (exerciseRepository.count() == 0) {
+//            List<Exercise> exercises = exerciseRepository.saveAll(List.of(
+//                new Exercise(1L, "Agachamento", Type.PERNA, null, null),
+//                new Exercise(2L, "Supino", Type.PEITO, null, null),
+//                new Exercise(3L, "Rosca Direta", Type.BRACO, null, null),
+//                new Exercise(4L, "Corrida", Type.CARDIO, null, null),
+//                new Exercise(5L, "Abdominal", Type.CORE, null, null)
+//            ));
+//            System.out.println("Exercícios padrão inseridos no banco!");
+            
 //            if (workoutRepository.count() == 0) {
 //            	User user = userRepository.findByEmail("admin@mail.com").get();
 //            	
@@ -56,7 +56,7 @@ public class ExerciseSeeder implements CommandLineRunner {
 //                workoutRepository.save(savedWorkout);
 //                System.out.println("Exercícios adicionados ao Workout!");
 //            }
-        }
+//        }
 
     }
 

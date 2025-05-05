@@ -58,9 +58,7 @@ public class UserService {
 								.stream().map(workoutExercise -> { // Explicit type for workoutExercise
 									WorkoutExerciseDTO workoutExerciseDTO = new WorkoutExerciseDTO();
 									workoutExerciseDTO.setId(workoutExercise.getId());
-									workoutExerciseDTO.setExerciseId(workoutExercise.getExercise().getId());
-									workoutExerciseDTO.setExerciseName(workoutExercise.getExercise().getName());
-									workoutExerciseDTO.setImageUrl("/exercises/" + workoutExercise.getId() + "/image");
+									workoutExerciseDTO.setExercise(workoutExercise.getExercise());
 									workoutExerciseDTO.setSets(workoutExercise.getSets());
 									workoutExerciseDTO.setReps(workoutExercise.getReps());
 									return workoutExerciseDTO;

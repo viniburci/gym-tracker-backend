@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.burci.security.auth.AuthenticationService;
 import com.burci.security.workout.WorkoutDTO;
 import com.burci.security.workout.WorkoutExerciseDTO;
 

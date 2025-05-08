@@ -1,6 +1,5 @@
 package com.burci.security.auth;
 
-import com.burci.security.user.User;
 import com.burci.security.user.UserMinDTO;
 import com.fasterxml.jackson.annotation.JsonProperty;
 

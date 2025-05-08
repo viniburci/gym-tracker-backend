@@ -8,7 +8,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.burci.security.token.Token;
 import com.burci.security.workout.Workout;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -31,6 +30,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "_user")
 public class User implements UserDetails {
 
+  private static final long serialVersionUID = 1L;
+  
   @Id
   @GeneratedValue
   private Long id;

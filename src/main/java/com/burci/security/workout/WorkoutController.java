@@ -57,9 +57,10 @@ public class WorkoutController {
             @PathVariable Long workoutId,
             @PathVariable Long exerciseId,
             @RequestParam int sets,
-            @RequestParam int reps) {
+            @RequestParam int reps,
+            @RequestParam int position) {
         
-        WorkoutExerciseDTO workoutExerciseDTO = service.addExerciseToWorkout(workoutId, exerciseId, sets, reps);
+        WorkoutExerciseDTO workoutExerciseDTO = service.addExerciseToWorkout(workoutId, exerciseId, sets, reps, position);
         return ResponseEntity.ok(workoutExerciseDTO);
     }
 }

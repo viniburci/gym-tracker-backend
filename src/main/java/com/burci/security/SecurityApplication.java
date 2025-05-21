@@ -3,10 +3,10 @@ package com.burci.security;
 import com.burci.security.auth.AuthenticationService;
 import com.burci.security.auth.RegisterRequest;
 import com.burci.security.user.Role;
+import org.springframework.context.annotation.Bean;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
@@ -18,7 +18,7 @@ public class SecurityApplication {
 	}
 
 //	@Bean
-//	public CommandLineRunner commandLineRunner(
+//	CommandLineRunner commandLineRunner(
 //			AuthenticationService service
 //	) {
 //		return args -> {

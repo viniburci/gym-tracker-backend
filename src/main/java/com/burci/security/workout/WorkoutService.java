@@ -119,7 +119,7 @@ public class WorkoutService {
                     Exercise exercise = exerciseRepository.findById(workoutExercise.getExercise().getId())
                             .orElseThrow(() -> new EntityNotFoundException("Exercício não encontrado"));
 
-                    return new WorkoutExercise(existingWorkout, exercise, workoutExercise.getSets(), workoutExercise.getReps());
+                    return new WorkoutExercise(existingWorkout, exercise, workoutExercise.getSets(), workoutExercise.getReps(), workoutExercise.getPosition());
                 })
                 .collect(Collectors.toList());
 
@@ -150,7 +150,7 @@ public class WorkoutService {
     }
 
     @Transactional
-    public WorkoutExerciseDTO addExerciseToWorkout(Long workoutId, Long exerciseId, int sets, int reps) {
+    public WorkoutExerciseDTO addExerciseToWorkout(Long workoutId, Long exerciseId, int sets, int reps, int position) {
     	User user = authenticationService.getAuthenticatedUser();
         Workout workout = workoutRepository.findById(workoutId)
                 .orElseThrow(() -> new EntityNotFoundException("Treino não encontrado"));
@@ -173,7 +173,7 @@ public class WorkoutService {
             return new WorkoutExerciseDTO(workoutExerciseRepository.save(workoutExercise));
         }
 
-        WorkoutExercise newWorkoutExercise = new WorkoutExercise(workout, exercise, sets, reps);
+        WorkoutExercise newWorkoutExercise = new WorkoutExercise(workout, exercise, sets, reps, position);
         return new WorkoutExerciseDTO(workoutExerciseRepository.save(newWorkoutExercise));
     }
 }

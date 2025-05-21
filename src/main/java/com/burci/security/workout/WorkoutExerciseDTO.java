@@ -13,6 +13,7 @@ public class WorkoutExerciseDTO {
     private Exercise exercise;
     private int sets;
     private int reps;
+    private int position;
     
     public WorkoutExerciseDTO() { }
     
@@ -27,5 +28,6 @@ public class WorkoutExerciseDTO {
     	
     	sets = workoutExercise.getSets();
     	reps = workoutExercise.getReps();
+    	position = workoutExercise.getPosition();
     }
 }

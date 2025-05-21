@@ -35,11 +35,13 @@ public class WorkoutExercise {
 
     private int sets; 
     private int reps;
+    private int position;
     
-    public WorkoutExercise(Workout workout, Exercise exercise, int sets, int reps) {
+    public WorkoutExercise(Workout workout, Exercise exercise, int sets, int reps, int position) {
         this.workout = workout;
         this.exercise = exercise;
         this.sets = sets;
         this.reps = reps;
+        this.position = position;
     }
 }

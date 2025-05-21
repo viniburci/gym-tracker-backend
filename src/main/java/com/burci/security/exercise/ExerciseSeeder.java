@@ -5,10 +5,8 @@ import java.util.List;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import com.burci.security.auth.AuthenticationService;
 import com.burci.security.user.User;
 import com.burci.security.user.UserRepository;
-import com.burci.security.user.UserService;
 import com.burci.security.workout.Workout;
 import com.burci.security.workout.WorkoutExercise;
 import com.burci.security.workout.WorkoutRepository;
@@ -28,6 +26,7 @@ public class ExerciseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+    	
 //        if (exerciseRepository.count() == 0) {
 //            List<Exercise> exercises = exerciseRepository.saveAll(List.of(
 //                new Exercise(1L, "Agachamento", Type.PERNA, null, null),
@@ -49,7 +48,7 @@ public class ExerciseSeeder implements CommandLineRunner {
 //                System.out.println("Workout padrão criado: " + savedWorkout.getName());
 //
 //                List<WorkoutExercise> workoutExercises = exercises.stream()
-//                    .map(exercise -> new WorkoutExercise(null, savedWorkout, exercise, 3, 10))
+//                    .map(exercise -> new WorkoutExercise(null, savedWorkout, exercise, 3, 10, 0))
 //                    .toList();
 //
 //                savedWorkout.setWorkoutExercises(workoutExercises);

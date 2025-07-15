@@ -1,4 +1,4 @@
-package com.burci.security.workout;
+ package com.burci.security.workout;
 
 import java.util.List;
 import java.util.Optional;
@@ -85,6 +85,7 @@ public class WorkoutService {
                 newWe.setExercise(exercise);
                 newWe.setSets(we.getSets());
                 newWe.setReps(we.getReps());
+                newWe.setPosition(we.getPosition());
                 newWe.setWorkout(workout);
                 return newWe;
             })

@@ -2,7 +2,6 @@
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,28 +108,24 @@ public class WorkoutService {
 
         existingWorkout.setName(updatedWorkout.getName());
 
-        //Criar um Set de IDs dos exercícios enviados
-        Set<Long> updatedExerciseIds = updatedWorkout.getWorkoutExercises().stream()
-                .map(we -> we.getExercise().getId())
-                .collect(Collectors.toSet());
+        // Limpar a coleção existente
+        existingWorkout.getWorkoutExercises().clear();
 
-        //Atualizar ou adicionar exercícios
-        List<WorkoutExercise> updatedExercises = updatedWorkout.getWorkoutExercises().stream()
-                .map(workoutExercise -> {
-                    Exercise exercise = exerciseRepository.findById(workoutExercise.getExercise().getId())
-                            .orElseThrow(() -> new EntityNotFoundException("Exercício não encontrado"));
+        // Adicionar os novos exercícios
+        updatedWorkout.getWorkoutExercises().forEach(workoutExercise -> {
+            Exercise exercise = exerciseRepository.findById(workoutExercise.getExercise().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Exercício não encontrado"));
 
-                    return new WorkoutExercise(existingWorkout, exercise, workoutExercise.getSets(), workoutExercise.getReps(), workoutExercise.getPosition());
-                })
-                .collect(Collectors.toList());
-
-        //Remover exercícios que não foram enviados
-        List<WorkoutExercise> exercisesToRemove = existingWorkout.getWorkoutExercises().stream()
-                .filter(we -> !updatedExerciseIds.contains(we.getExercise().getId()))
-                .collect(Collectors.toList());
-
-        workoutExerciseRepository.deleteAll(exercisesToRemove);
-        existingWorkout.setWorkoutExercises(updatedExercises);
+            WorkoutExercise newWorkoutExercise = new WorkoutExercise(
+                existingWorkout, 
+                exercise, 
+                workoutExercise.getSets(), 
+                workoutExercise.getReps(), 
+                workoutExercise.getPosition()
+            );
+            
+            existingWorkout.getWorkoutExercises().add(newWorkoutExercise);
+        });
 
         return new WorkoutDTO(workoutRepository.save(existingWorkout));
     }
